@@ -1,2 +1,3 @@
 rootProject.name = 'otus-java-professional'
+include 'homework1'
 
