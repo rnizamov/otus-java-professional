@@ -15,7 +15,7 @@ import java.util.List;
 
 public class TestRunner {
     public static void run(Class<?> clazz) throws InvocationTargetException, IllegalAccessException {
-        if (checkClassIsDisabled(clazz)) return;
+        if (isClassDisabled(clazz)) return;
         var methods = clazz.getDeclaredMethods();
         checkAnnotationMarkup(methods);
         var beforeMethod = getMethodByAnnotation(BeforeSuite.class, methods);
@@ -54,15 +54,15 @@ public class TestRunner {
 
     private static void invokeTestMethods(List<Method> sortedMethods, List<Method> successMethods, List<Method> failedMethods, List<Method> disabledMethods) {
         for (Method method : sortedMethods) {
-            if (!method.isAnnotationPresent(Disabled.class)) {
-                try {
-                    method.invoke(null);
-                    successMethods.add(method);
-                } catch (Exception e) {
-                    failedMethods.add(method);
-                }
-            } else {
+            if (method.isAnnotationPresent(Disabled.class)) {
                 disabledMethods.add(method);
+                continue;
+            }
+            try {
+                method.invoke(null);
+                successMethods.add(method);
+            } catch (Exception e) {
+                failedMethods.add(method);
             }
         }
     }
@@ -102,16 +102,16 @@ public class TestRunner {
         }
     }
 
-    private static boolean checkClassIsDisabled(Class<?> clazz) {
-        if (clazz.isAnnotationPresent(Disabled.class)) {
-            System.out.println("Тестовый класс: " + clazz.getSimpleName() + " отключен");
-            if (!clazz.getAnnotation(Disabled.class).reason().isBlank()) {
-                System.out.println("по причине: " + clazz.getAnnotation(Disabled.class).reason());
-            } else {
-                System.out.println();
-            }
-            return true;
+    private static boolean isClassDisabled(Class<?> clazz) {
+        if (!clazz.isAnnotationPresent(Disabled.class)) {
+            return false;
         }
-        return false;
+        System.out.println("Тестовый класс: " + clazz.getSimpleName() + " отключен");
+        if (!clazz.getAnnotation(Disabled.class).reason().isBlank()) {
+            System.out.println("по причине: " + clazz.getAnnotation(Disabled.class).reason());
+        } else {
+            System.out.println();
+        }
+        return true;
     }
 }
